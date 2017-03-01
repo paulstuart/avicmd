@@ -1,0 +1,6 @@
+[main]
+
+avi_host = "192.168.1.100"
+
+username = "avi_username"
+password = "avi_password"

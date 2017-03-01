@@ -27,7 +27,7 @@ type credentials struct {
 	Password string `json:"password"`
 }
 
-type Server struct {
+type poolServer struct {
 	RewriteHostHeader bool `json:"rewrite_host_header"`
 	Port              int  `json:"port"`
 	Ratio             int  `json:"ratio"`
@@ -180,7 +180,6 @@ func poolList(cfg *grequests.RequestOptions) {
 		fmt.Println("Name:", result["name"], "UUID:", result["uuid"])
 	}
 	return
-	jprint(pool)
 }
 
 func pooly(cfg *grequests.RequestOptions) {
@@ -196,7 +195,6 @@ func pooly(cfg *grequests.RequestOptions) {
 		fmt.Println("Name:", result["name"], "UUID:", result["uuid"])
 	}
 	return
-	jprint(pool)
 }
 
 func poolDetails(pool map[string]interface{}) {
@@ -207,7 +205,7 @@ func poolDetails(pool map[string]interface{}) {
 	servers := s.([]interface{})
 	fmt.Printf("%-20s %-17s %5s %s\n", "Hostname", "IP", "Ratio", "Enabled")
 	for _, s := range servers {
-		var server Server
+		var server poolServer
 		b, _ := json.Marshal(s)
 		json.Unmarshal(b, &server)
 		fmt.Printf("%-20s %-17s %5d %t\n", server.Hostname, server.IP.Addr, server.Ratio, server.Enabled)
@@ -248,7 +246,7 @@ func uuidLookup(cfg *grequests.RequestOptions, name string) (string, error) {
 	return "", fmt.Errorf("no uuid found for pool: %s", name)
 }
 
-func Connect(username, password string) *grequests.RequestOptions {
+func connect(username, password string) *grequests.RequestOptions {
 	if len(username) == 0 {
 		panic("username not set!")
 	}
@@ -335,7 +333,7 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	cfg := Connect(username, password)
+	cfg := connect(username, password)
 	if len(args) == 0 {
 		fmt.Println("no command specified")
 		os.Exit(1)

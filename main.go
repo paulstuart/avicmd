@@ -343,7 +343,7 @@ func main() {
 	case "add":
 		poolCheck()
 		addToPool(cfg, poolName, hostName, hostIP, hostPort, hostRatio, hostEnabled)
-	case "del":
+	case "del", "delete":
 		poolCheck()
 		if len(hostName) == 0 {
 			fmt.Println("no hostName specified")
@@ -360,13 +360,4 @@ func main() {
 		fmt.Println("invalid command:", args[0])
 		os.Exit(1)
 	}
-
-	/*
-		poolInfo(cfg, poolName)
-		return
-		pooly(cfg)
-		return
-		poolList(cfg)
-		return
-	*/
 }

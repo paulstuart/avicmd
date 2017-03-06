@@ -27,36 +27,19 @@ type credentials struct {
 	Password string `json:"password"`
 }
 
-type poolServer struct {
-	RewriteHostHeader bool `json:"rewrite_host_header"`
-	Port              int  `json:"port"`
-	Ratio             int  `json:"ratio"`
-	IP                struct {
-		Type string `json:"type"`
-		Addr string `json:"addr"`
-	} `json:"ip"`
-	Enabled       bool   `json:"enabled"`
-	VerifyNetwork bool   `json:"verfiy_network"`
-	Static        bool   `json:"static"`
-	Hostname      string `json:"hostname"`
+type poolIP struct {
+	Type string `json:"type"`
+	Addr string `json:"addr"`
 }
-
-func makeServer(hostname, ip string, port, ratio int) map[string]interface{} {
-	return map[string]interface{}{
-		"ratio": ratio,
-		"ip": map[string]string{
-			"type": "V4",
-			"addr": ip,
-		},
-		"port":                  port,
-		"hostname":              hostname,
-		"enabled":               true,
-		"verify_network":        false,
-		"static":                false,
-		"resolve_server_by_dns": false,
-		"prst_hdr_val":          "",
-		"rewrite_host_header":   false,
-	}
+type poolServer struct {
+	RewriteHostHeader bool   `json:"rewrite_host_header"`
+	Port              int    `json:"port"`
+	Ratio             int    `json:"ratio"`
+	IP                poolIP `json:"ip"`
+	Enabled           bool   `json:"enabled"`
+	VerifyNetwork     bool   `json:"verfiy_network"`
+	Static            bool   `json:"static"`
+	Hostname          string `json:"hostname"`
 }
 
 func jprint(x interface{}) {
@@ -66,28 +49,6 @@ func jprint(x interface{}) {
 		return
 	}
 	fmt.Println(string(b))
-}
-
-func createPool(cfg *grequests.RequestOptions, poolName string) {
-	/*
-		resp, err := grequests.Post(baseURL+"/api/pool/"+uuid, cfg)
-		if err != nil {
-			fmt.Println("POOL ERR:", err)
-		}
-		var pool map[string]interface{}
-		resp.JSON(&pool)
-		svr := makeServer(hostname, ip, port, ratio)
-		servers := pool["servers"].([]interface{})
-		servers = append(servers, svr)
-		pool["servers"] = servers
-
-		cfg.JSON = pool
-		resp, err = grequests.Put(baseURL+"/api/pool/"+uuid, cfg)
-		if err != nil {
-			fmt.Println("POOL ERR:", err)
-		}
-		fmt.Println("RESP:", resp)
-	*/
 }
 
 func addToPool(cfg *grequests.RequestOptions, poolName, hostname, ip string, port, ratio int, enabled bool) {
@@ -101,7 +62,13 @@ func addToPool(cfg *grequests.RequestOptions, poolName, hostname, ip string, por
 	}
 	var pool map[string]interface{}
 	resp.JSON(&pool)
-	svr := makeServer(hostname, ip, port, ratio)
+	svr := poolServer{
+		Port:     port,
+		Ratio:    ratio,
+		IP:       poolIP{Addr: ip, Type: "V4"},
+		Enabled:  enabled,
+		Hostname: hostname,
+	}
 	s1 := pool["servers"]
 	if s1 == nil {
 		s1 = make([]interface{}, 0, 10)
@@ -350,12 +317,11 @@ func main() {
 			os.Exit(1)
 		}
 		deleteFromPool(cfg, poolName, hostName)
-	case "create":
-		poolCheck()
-		createPool(cfg, poolName)
 	case "list":
 		poolCheck()
 		poolInfo(cfg, poolName)
+	case "pools":
+		pooly(cfg)
 	default:
 		fmt.Println("invalid command:", args[0])
 		os.Exit(1)
